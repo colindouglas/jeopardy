@@ -2,11 +2,11 @@ library(rvest)
 library(tidyverse)
 library(stringr)
 
-malformedGames <- c()
 
 GetJeopGame <- function(gameID) {
+  print(paste("Fetching game #", gameID))
   Sys.sleep(0.5)
-  
+
   url <- paste0("http://www.j-archive.com/showgame.php?game_id=", gameID)
   
   html_scrape <- read_html(url)
@@ -26,7 +26,8 @@ GetJeopGame <- function(gameID) {
     html_text() %>%
     strsplit(",") %>%
     map(~ .[1]) %>%
-    unlist()
+    unlist() %>%
+    rev()
   
  scores <- html_scrape %>%
     html_nodes(xpath = '//*[contains(concat( " ", @class, " " ), concat( " ", "score_positive", " " ))] | //*[contains(concat( " ", @class, " " ), concat( " ", "score_negative", " " ))]') %>%
@@ -51,7 +52,6 @@ GetJeopGame <- function(gameID) {
                           score = scores)
    return(gameInfo)
  } else {
-   malformedGames <- c(malformedGames, gameID)
    return(data_frame(gameID,
                      episode = NA,
                      date = NA,
@@ -64,20 +64,12 @@ GetJeopGame <- function(gameID) {
  
 }
 
-games <- map_dfr(1:5902, ~ GetJeopGame(.))
+gamesScraped <- map_dfr(1:5902, ~ GetJeopGame(.)) 
+
+games <- gamesScraped %>%
+  mutate(adjScore = case_when(
+    date < as.Date("26-Nov-2001", format = "%d-%b-%Y") ~ score * 2,
+    date >= as.Date("26-Nov-2001", format = "%d-%b-%Y") ~ score
+  ))
 
 write_csv(games, "data/all_games.csv")
-
-games %>%
-  filter(position == "final") %>%
-  ggplot(aes(x = podium, y = score)) +
-  geom_boxplot(aes(fill = podium))
-#  geom_line(aes(group = interaction(podium, episode), color = podium))
-# 
-# games %>%
-#   filter(position == "final") %>%
-#   ggplot(aes(x = score)) +
-#   geom_density(aes(fill = podium), alpha = 0.3)
-# 
-
-
