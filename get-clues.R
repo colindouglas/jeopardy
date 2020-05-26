@@ -1,14 +1,12 @@
 library(rvest)
 library(tidyverse)
 library(tidytext)
-library(robotstxt)
 
 # Clean up any raw clue data leftover from last time that we may have missed
 source("clues-cleanup.R")
 
-# Get the crawl delay from robots.txt
-rtxt <- robotstxt("https://j-archive.com")
-delay <- as.numeric(rtxt$crawl_delay$value)
+# Get the delay from robots.txt
+source("robotstxt-delay.R")
 
 # Function for scraping HTML boards of games, given a list of game IDs
 # Returns the raw HTML of the game page in a list, for future parsing
@@ -109,6 +107,7 @@ get_clues <- function(html) {
 
 # Read in a list of games we know about
 games_all <- read_csv(file = "data/all_games.csv") %>%
+  arrange(desc(date)) %>%
   distinct(gameID, episode)
 
 # Load the clues we've already scraped
