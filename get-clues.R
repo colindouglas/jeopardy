@@ -1,18 +1,27 @@
 library(rvest)
 library(tidyverse)
 library(tidytext)
+library(robotstxt)
 
+# Clean up any raw clue data leftover from last time that we may have missed
+source("clues-cleanup.R")
 
-## Function for scraping HTML boards of games, given a start ID and an end ID
-get_games <- function(gameIDs) {
-  map(gameIDs, function(gameID) {
-    Sys.sleep(2)
-    print(paste0("Fetching game ", gameID))
-    return(read_html(paste0("http://www.j-archive.com/showgame.php?game_id=", gameID)))
-  })
+# Get the crawl delay from robots.txt
+rtxt <- robotstxt("https://j-archive.com")
+delay <- as.numeric(rtxt$crawl_delay$value)
+
+# Function for scraping HTML boards of games, given a list of game IDs
+# Returns the raw HTML of the game page in a list, for future parsing
+get_game <- function(gameID) {
+  url <- paste0("http://www.j-archive.com/showgame.php?game_id=", gameID)
+  Sys.sleep(delay)
+  message(paste0("Fetching game @ ", url))
+  read_html(url)
 }
 
-## Function to get the clues from the HTML board of a game
+get_games <- function(gameIDs) map(gameIDs, ~ get_game(.))
+
+# Parses the HTML of a game page into a df of clues
 get_clues <- function(html) {
   
   header <- html %>%
@@ -21,7 +30,7 @@ get_clues <- function(html) {
     strsplit(" - ") %>%
     unlist()
   
-  game_id <- str_extract(header[1], "[0-9]+")
+  game_id <- as.numeric(str_extract(header[1], "[0-9]+"))
   game_date <- lubridate::mdy(header[2])
 
   # Extract the categories
@@ -50,7 +59,8 @@ get_clues <- function(html) {
   
   # Make a dataframe of responses by position
   responses <- tibble(clue_index = clue_positions,
-                      response = map(clue_answers, ~ .[!(. %in% bad_strings)]))
+                      response = map(clue_answers, ~ .[!(. %in% bad_strings)])) %>%
+    mutate(response = paste(response, collapse = " "))
   
   # Pull out the raw clue text
   clues_raw <- html %>%
@@ -61,11 +71,12 @@ get_clues <- function(html) {
   # Final Jep extraction
   final_answer <- answers_raw[grepl("clue_FJ", answers_raw)] %>% 
     str_extract('"correct_response.*</em>') %>%
-    str_split(., pattern = "[<>]") %>%
-    unlist()
+    paste0("<", .) %>%
+    gsub('<.*?>', ' ', .) %>%
+    trimws()
   
   # Construct the data frame
-  clue_df <- tibble(number = game_id,
+  clue_df <- tibble(episode = game_id,
                     date = game_date,
                     round = rep(c("J", "DJ"), each = 30),
                     row = c(rep(1:5, each = 6), rep(1:5, each = 6)),
@@ -76,7 +87,7 @@ get_clues <- function(html) {
                     clue = trimws(map(clues_raw, ~ .[9]))[1:60]) %>%
     mutate(clue_index = paste0("clue_", round, "_", col, "_", row)) %>%
     left_join(responses, by = "clue_index") %>%
-    add_row(number = game_id,
+    add_row(episode = game_id,
             date = game_date,
             round = "FJ",
             row = 1,
@@ -86,10 +97,9 @@ get_clues <- function(html) {
             pick_order = NA,
             #clue = trimws(clues_raw[[61]][[2]]),
             clue_index = "clue_FJ_1_1",
-            response = final_answer[2]) %>%
+            response = final_answer) %>%
     mutate(dailydouble = grepl("DD", value)) %>%
-    mutate(value = gsub(pattern = "DD:", replacement = "", x = value),
-           value = gsub(pattern = "[$,]", replacement = "", x = value)) %>%
+    mutate(value = str_extract(value, "[0-9]+") %>% as.numeric()) %>%
     mutate(response = ifelse(response == "NULL", NA, as.character(response)))
   
   
@@ -97,34 +107,39 @@ get_clues <- function(html) {
 }
 
 
-# Get the games
-games <- read_csv(file = "data/all_games.csv") %>% 
-  pull(gameID) %>% 
-  unique() %>% 
-  get_games()
+# Read in a list of games we know about
+games_all <- read_csv(file = "data/all_games.csv") %>%
+  distinct(gameID, episode)
 
-clues <- map_dfr(games, ~ get_clues(.)) %>%
-  mutate(q_number = paste(number, "-", case_when(round == "J" ~ "J",
-                                                 round == "DJ" ~ "D",
-                                                 round == "FJ" ~ "F",
-                                                 TRUE ~ "X"), row, col, sep = ""))
+# Load the clues we've already scraped
+all_clues <- read_csv("data/clues_clean.csv") %>% select(-response_clean, -q_number)
 
-clues %>%
-  write_csv(path = "data/clues_raw.csv", na = "")
+all_clues_dist <- all_clues %>%
+  distinct(episode)
 
-responses_no_stopwords <- clues %>%
-  unnest_tokens(word, response) %>% 
-  anti_join(stop_words, by = c("word" = "word")) %>%
-  group_by(q_number) %>% 
-  summarise(response_clean = paste(word,collapse =' '))
+# Find the games we haven't scraped yet
+games_todo <- anti_join(games_all, all_clues_dist, by = "episode") %>% pull(gameID)
 
-clues_clean <- clues %>%
-  mutate(category = gsub("\\(.+\\)", "", category),
-         response = gsub("\\(.+\\)", "", response),
-         response = gsub("([\\])", "", response)) %>%
-  filter(!is.na(value)) %>%
-  left_join(responses_no_stopwords, by = "q_number")
+# Using a for loop, don't care
+for (game_id in games_todo) {
+  #try(
+    #{
+      # Get the gameboard
+      gameboard <- get_game(game_id)
+      
+      # Get the clues from the gameboard
+      clues <- get_clues(gameboard)
+      
+      # Add the new clues to the df of clues
+      all_clues <- bind_rows(all_clues, clues)
+      
+      # Write the raw clues to a CSV at each step, so we can bail mid-process without losing data
+      write_csv(all_clues, path = "data/clues_raw.csv", na = "")
+    # }, 
+    # silent = TRUE)
+}
+
+# Cleanup the raw clue data at the end
+source("clues-cleanup.R")
 
 
-clues_clean %>%
-  write_csv(path = "data/clues_clean.csv", na = "")
