@@ -68,7 +68,6 @@ GetJeopGame <- function(gameID) {
   
 }
 
-
 while (last < stop_at) {
   
   # Find the last game scraped
@@ -82,7 +81,8 @@ while (last < stop_at) {
   # If we've scraped the last game, stop
   if (last >= stop_at) break
   
-  gamesScraped <- map_dfr((last + 1):(last + chunk_size), ~ GetJeopGame(.)) 
+  endpoint <- min(c(last+chunk_size, stop_at))
+  gamesScraped <- map_dfr((last + 1):endpoint, ~ GetJeopGame(.)) 
   
   new_games <- gamesScraped %>%
     mutate(adjScore = case_when(
