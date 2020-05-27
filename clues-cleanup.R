@@ -1,29 +1,16 @@
 library(tidyverse)
 library(tidytext)
 
-message("Cleaning up clues_raw.csv >> clues_clean.csv")
+message("Cleaning up clues.csv >> clues.db")
 
-if (file.exists("data/clues_raw.csv")) {
-  
-  clues_raw <- read_csv(file = "data/clues_raw.csv", col_types = cols()) 
-  
-  if (file.exists("data/clues_clean")) {
-    clues_clean <- read_csv(file = "data/clues_clean.csv", col_types = cols()) %>%
-      select(names(clues_raw))
-    
-    clues <- bind_rows(clues_clean, clues_raw) %>%
-      distinct(episode, round, row, col, value, .keep_all = TRUE)
-    
-  } else {
-    clues <- clues_raw %>%
-      mutate(q_number = paste(episode, case_when(round == "J" ~ "J",
-                                                 round == "DJ" ~ "D",
-                                                 round == "FJ" ~ "F",
-                                                 TRUE ~ "X"), row, col, sep = ""))
-  }
-}
+round_abbrev <- c("J" = "J",
+                  "DJ" = "D",
+                  "FJ" = "F")
 
-clues <- distinct(clues, q_number, .keep_all = TRUE)
+clues <- read_csv(file = "data/clues.csv", col_types = cols())  %>%
+  mutate(q_number = paste0(episode, round_abbrev[round], row, col),
+         date = format(date, "%b %d, %Y")) %>%
+  distinct(q_number, .keep_all = TRUE) 
 
 # This takes the stop words out of the responses
 responses_no_stopwords <- clues %>%
@@ -45,4 +32,23 @@ clues_clean <- clues %>%
 
 # Make SQL connection, write table
 source("SQL-connection.R")
-DBI::dbWriteTable(con = cluedb, name = "clues", value = clues_clean, append = FALSE)
+
+field_types <- toupper(
+  c("episode" = "integer" , 
+                 "date" = "character", 
+                 "round" = "character", 
+                 "row" = "integer", 
+                 "col" = "integer", 
+                 "category" = "character", 
+                 "value" = "integer", 
+                 "pick_order" = "integer", 
+                 "clue" = "text", 
+                 "clue_index" = "character", 
+                 "response" = "text", 
+                 "dailydouble" = "logical", 
+                 "q_number" = "character",
+                 "response_clean" = "text"))
+
+
+DBI::dbWriteTable(con = cluedb, name = "clues", value = clues_clean, overwrite = TRUE, field.types = field_types)
+DBI::dbDisconnect(cluedb)

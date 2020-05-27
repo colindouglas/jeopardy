@@ -5,7 +5,7 @@ library(tidyverse)
 source("clues-cleanup.R")
 
 # Get the delay from robots.txt
-source("robotstxt-delay.R")
+source("rt-delay.R")
 
 # Function for scraping HTML boards of games, given a list of game IDs
 # Returns the raw HTML of the game page in a list, for future parsing
@@ -107,13 +107,12 @@ get_clues <- function(html) {
 
 
 # Read in a list of games we know about
-games_all <- read_csv(file = "data/all_games.csv", col_types = cols()) %>%
+games_all <- read_csv(file = "data/games.csv", col_types = cols()) %>%
   arrange(desc(date)) %>%
   distinct(gameID, episode)
 
 # Load the clues we've already scraped
-all_clues <- read_csv("data/clues_clean.csv", col_types = cols()) %>% 
-  select(-response_clean, -q_number)
+all_clues <- read_csv("data/clues.csv", col_types = cols())
 
 all_clues_dist <- all_clues %>%
   distinct(episode)
@@ -133,7 +132,7 @@ for (game_id in games_todo) {
       all_clues <- bind_rows(all_clues, clues)
       
       # Write the raw clues to a CSV at each step, so we can bail mid-process without losing data
-      write_csv(all_clues, path = "data/clues_raw.csv", na = "")
+      write_csv(all_clues, path = "data/clues.csv", na = "")
 }
 
 # Cleanup the raw clue data at the end

@@ -1,2 +1,2 @@
-cluedb <- DBI::dbConnect(RSQLite::SQLite(), "data/clues.db")
+cluedb <- DBI::dbConnect(RSQLite::SQLite(), "flask/clues.db")
 
