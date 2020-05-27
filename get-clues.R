@@ -1,6 +1,5 @@
 library(rvest)
 library(tidyverse)
-library(tidytext)
 
 # Clean up any raw clue data leftover from last time that we may have missed
 source("clues-cleanup.R")
@@ -58,6 +57,7 @@ get_clues <- function(html) {
   # Make a dataframe of responses by position
   responses <- tibble(clue_index = clue_positions,
                       response = map(clue_answers, ~ .[!(. %in% bad_strings)])) %>%
+    rowwise() %>%
     mutate(response = paste(response, collapse = " "))
   
   # Pull out the raw clue text
@@ -100,18 +100,20 @@ get_clues <- function(html) {
     mutate(value = str_extract(value, "[0-9]+") %>% as.numeric()) %>%
     mutate(response = ifelse(response == "NULL", NA, as.character(response)))
   
+  message("Found ", nrow(clue_df), " clues from game on ", game_date)
   
   return(clue_df)
 }
 
 
 # Read in a list of games we know about
-games_all <- read_csv(file = "data/all_games.csv") %>%
+games_all <- read_csv(file = "data/all_games.csv", col_types = cols()) %>%
   arrange(desc(date)) %>%
   distinct(gameID, episode)
 
 # Load the clues we've already scraped
-all_clues <- read_csv("data/clues_clean.csv") %>% select(-response_clean, -q_number)
+all_clues <- read_csv("data/clues_clean.csv", col_types = cols()) %>% 
+  select(-response_clean, -q_number)
 
 all_clues_dist <- all_clues %>%
   distinct(episode)
@@ -121,8 +123,6 @@ games_todo <- anti_join(games_all, all_clues_dist, by = "episode") %>% pull(game
 
 # Using a for loop, don't care
 for (game_id in games_todo) {
-  #try(
-    #{
       # Get the gameboard
       gameboard <- get_game(game_id)
       
@@ -134,8 +134,6 @@ for (game_id in games_todo) {
       
       # Write the raw clues to a CSV at each step, so we can bail mid-process without losing data
       write_csv(all_clues, path = "data/clues_raw.csv", na = "")
-    # }, 
-    # silent = TRUE)
 }
 
 # Cleanup the raw clue data at the end
