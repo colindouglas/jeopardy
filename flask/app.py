@@ -1,11 +1,11 @@
 from flask import Flask
-from random_question import get_clue
+from randclue import get_clue
 
 app = Flask(__name__)
 
 
 @app.route('/')
-def hello_world():
+def random_clue():
     clue = get_clue()
     return '''
     <html>
