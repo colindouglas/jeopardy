@@ -24,5 +24,4 @@ vignettes/*.pdf
 *.knit.md
 .Rproj.user
 jeopardy.Rproj
-data/
 .idea/

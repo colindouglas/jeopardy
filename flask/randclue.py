@@ -14,13 +14,18 @@ def get_clue(q=None):
         return None
 
     conn.row_factory = sqlite3.Row  # Apparently this is magic
+    cursor = None
     if q:
-        ##TODO GET clue by ID
+        cursor = conn.execute("SELECT * FROM clues WHERE q_number='{q}';".format(q=q))
+        clue = cursor.fetchall()
     else:
         # Select a random clue, convert it to a dictionary
         cursor = conn.execute('SELECT * FROM clues ORDER BY RANDOM() LIMIT 1;')
-        clue = dict(cursor.fetchall()[0])
+        clue = cursor.fetchall()
 
-    # Explicitly close the connection
     conn.close()
-    return clue
+    if clue:
+        return dict(clue[0])  # Convert the first row to a dictionary
+    else:
+        return None
+
