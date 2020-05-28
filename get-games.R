@@ -3,7 +3,7 @@ library(tidyverse)
 library(stringr)
 
 # Get the delay from robots.txt
-source("robotstxt-delay.R")
+source("rt-delay.R")
 
 stop_at <- 6664
 chunk_size <- 20  # Write to output every x games

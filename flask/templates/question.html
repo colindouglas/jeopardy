@@ -1,8 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{ content.title }}</title>
+
+    <title>
+        {{ content.title }}
+    </title>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
 </head>
 <body>
 <div class="navbar" role="navigation">
@@ -23,14 +28,16 @@
 </div>
 
 
-<div style="text-align: center;">
-        From <i>{{ content.round }}</i> on {{ content.date }}
+<div class = "wrapper" style="text-align: center;">
+    From <i>{{ content.round }}</i> on {{ content.date }}
     <h2>{{ content.category }}</h2>
     <b><i>... for ${{ content.value }}</i></b><p>
     {{ content.clue }}<p>
     <div class="hint">{{ content.response }}</div><p>
     <small><a href=" {{ url_for('clue_lookup') }}/{{ content.q_number }}">permalink</a></small>
 
-<script src="{{ url_for('static', filename='main.js') }}" defer="defer"></script>
 </div>
 
+<script src="{{ url_for('static', filename='main.js') }}" defer="defer"></script>
+</body>
+</html>
