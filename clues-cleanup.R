@@ -1,15 +1,23 @@
 library(tidyverse)
 library(tidytext)
+library(lubridate)
 
 message("Cleaning up clues.csv >> clues.db")
 
-round_abbrev <- c("J" = "J",
+rounds_abbrev <- c("J" = "J",
                   "DJ" = "D",
                   "FJ" = "F")
 
+rounds_long <- c("J" = "Jeopardy!",
+                 "DJ" = "Double Jeopardy!",
+                 "FJ" = "Final Jeopardy!")
+
 clues <- read_csv(file = "data/clues.csv", col_types = cols())  %>%
-  mutate(q_number = paste0(episode, round_abbrev[round], row, col),
-         date = format(date, "%b %d, %Y")) %>%
+  mutate(q_number = paste0(episode, rounds_abbrev[round], row, col),
+         date = format(date, "%b %d, %Y"),
+         value = row * 100 * ifelse(round == "DJ", 2, 1) * ifelse(mdy(date) >= dmy("26-Nov-2001"), 2, 1), # Calculate value manually
+         round = rounds_long[round],
+         clue = str_replace(clue, "&", "and")) %>%
   distinct(q_number, .keep_all = TRUE) 
 
 # This takes the stop words out of the responses

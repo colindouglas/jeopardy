@@ -2,6 +2,7 @@ import sqlite3
 
 
 def get_clue(q=None):
+
     db_file = 'clues.db'  # Path to SQLite DB
 
     # Open connection to db
@@ -24,6 +25,7 @@ def get_clue(q=None):
         clue = cursor.fetchall()
 
     conn.close()
+
     if clue:
         return dict(clue[0])  # Convert the first row to a dictionary
     else:

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ content.title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="navbar" role="navigation">
+    <nav class="menu">
+        <input type="checkbox" id="menu-trigger" class="menu-trigger" />
+        <label for="menu-trigger">
+      <span class="menu-icon">
+      </span>
+        </label>
+        <a id="mood">
+            {% include 'sun-svg.html' %}
+        </a>
+        <div class="trigger">
+            <a class="menu-link" href="/">home</a>
+            <a class="menu-link active" href="{{ url_for('random_clue') }}">random</a>
+        </div>
+    </nav>
+</div>
+
+
+<div style="text-align: center;">
+        From <i>{{ content.round }}</i> on {{ content.date }}
+    <h2>{{ content.category }}</h2>
+    <b><i>... for ${{ content.value }}</i></b><p>
+    {{ content.clue }}<p>
+    <div class="hint">{{ content.response }}</div><p>
+    <small><a href=" {{ url_for('clue_lookup') }}/{{ content.q_number }}">permalink</a></small>
+
+<script src="{{ url_for('static', filename='main.js') }}" defer="defer"></script>
+</div>
+
