@@ -17,10 +17,11 @@ def get_clue(q=None):
     conn.row_factory = sqlite3.Row  # Apparently this is magic
     cursor = None
     if q:
-        cursor = conn.execute("SELECT * FROM clues WHERE q_number='{q}';".format(q=q))
+        # Select a specific clue
+        cursor = conn.execute("SELECT * FROM clues WHERE q_number=?;", (q,))
         clue = cursor.fetchall()
     else:
-        # Select a random clue, convert it to a dictionary
+        # Select a random clue
         cursor = conn.execute('SELECT * FROM clues ORDER BY RANDOM() LIMIT 1;')
         clue = cursor.fetchall()
 
