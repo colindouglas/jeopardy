@@ -61,4 +61,4 @@ field_types <- toupper(
 DBI::dbWriteTable(con = cluedb, name = "clues", value = clues_clean, overwrite = TRUE, field.types = field_types)
 DBI::dbDisconnect(cluedb)
 
-message("Wrote ", nrow(clues_clean), " clues to database.")
+message("Wrote ", nrow(clues_clean), " clues to database")
