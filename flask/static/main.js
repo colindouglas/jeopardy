@@ -12,7 +12,7 @@
       body.removeAttribute("data-theme");
     } else {
       localStorage.setItem("theme", DEFAULT_THEME);
-      initTheme(state);
+      initTheme(DEFAULT_THEME);
     }
   };
 
