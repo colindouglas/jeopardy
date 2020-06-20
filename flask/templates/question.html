@@ -3,11 +3,28 @@
 <head>
 
     <title>
-        {{ content.title }}
+        {{ content.category }} for ${{ content.value }}
     </title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style media = "all">
+        .spoiler, .spoiler2{
+            color: black;
+            background-color: black;
+            font-size: 24px;
+            border-color: white;
+            border-width: 2px;
+            border-style: dotted;
+        }
 
+        .spoiler:hover{
+            color: white;
+        }
+
+        .spoiler2:hover {
+            background-color:white;
+        }
+    </style>
 </head>
 <body>
 <div class="navbar" role="navigation">
@@ -17,13 +34,13 @@
       <span class="menu-icon">
       </span>
         </label>
-        <a id="mood">
-            {% include 'sun-svg.html' %}
+        <a id="mode" class="menu-link">
+            <span class="mdi mdi-lightbulb" style="font-size: 35px; line-height: 1;">
         </a>
         <div class="trigger">
-            <a class="menu-link active" href="https://colindougl.as">home</a>
-            <a class="menu-link" href="/">random</a>
-            <a class="menu-link" href="https://www.github.com/colindouglas/jeopardy">source</a>
+            <a class="menu-link active" href="https://colindougl.as"><span class="mdi mdi-home" style="font-size: 40px; line-height: 1;"></a>
+            <a class="menu-link" href="/"><span class="mdi mdi-dice-multiple" style="font-size: 40px; line-height: 1;"></a>
+            <a class="menu-link" href="https://www.github.com/colindouglas/jeopardy"><span class="mdi mdi-github" style="font-size: 40px; line-height: 1;"></a>
         </div>
     </nav>
 </div>
@@ -34,7 +51,7 @@
     <h2>{{ content.category }}</h2>
     <b><i>... for ${{ content.value }}</i></b><p>
     {{ content.clue }}<p>
-    <div class="hint">{{ content.response }}</div><p>
+    <span class="spoiler2">{{ content.response }}</span><p>
     <small><a href=" {{ url_for('clue_lookup') }}/{{ content.q_number }}">permalink</a></small>
 
 </div>

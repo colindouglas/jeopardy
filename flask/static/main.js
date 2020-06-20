@@ -1,35 +1,37 @@
 (() => {
   // Theme switch
-  const root = document.body;
-  const themeSwitch = document.getElementById("mood");
-  const themeData = root.getAttribute("data-theme");
+  const body = document.body;
+  const lamp = document.getElementById("mode");
+  // const data = body.getAttribute("data-theme");
+  const DEFAULT_THEME = "dark"; // "dark" | "light"
 
-  if (themeSwitch) {
-    initTheme(localStorage.getItem("theme"));
-    themeSwitch.addEventListener("click", () =>
-      toggleTheme(localStorage.getItem("theme"))
-    );
-
-    function toggleTheme(state) {
-      if (state === "dark") {
-        localStorage.setItem("theme", "light");
-        root.removeAttribute("data-theme");
-      } else if (state === "light") {
-        localStorage.setItem("theme", "dark");
-        document.body.setAttribute("data-theme", "dark");
-      } else {
-        initTheme(state);
-      }
+  const initTheme = (state) => {
+    if (state === "dark") {
+      body.setAttribute("data-theme", "dark");
+    } else if (state === "light") {
+      body.removeAttribute("data-theme");
+    } else {
+      localStorage.setItem("theme", DEFAULT_THEME);
+      initTheme(state);
     }
+  };
 
-    function initTheme(state) {
-      if (state === "dark") {
-        document.body.setAttribute("data-theme", "dark");
-      } else if (state === "light") {
-        root.removeAttribute("data-theme");
-      } else {
-        localStorage.setItem("theme", themeData);
-      }
+  const toggleTheme = (state) => {
+    if (state === "dark") {
+      localStorage.setItem("theme", "light");
+      body.removeAttribute("data-theme");
+    } else if (state === "light") {
+      localStorage.setItem("theme", "dark");
+      body.setAttribute("data-theme", "dark");
+    } else {
+      initTheme(state);
     }
-  }
+  };
+
+  initTheme(localStorage.getItem("theme"));
+
+  lamp.addEventListener("click", () =>
+    toggleTheme(localStorage.getItem("theme"))
+  );
+
 })();
