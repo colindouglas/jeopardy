@@ -12,7 +12,8 @@ def random_clue():
 @app.route('/q')
 @app.route('/q/<q>')
 def clue_lookup(q=None):
-    if not (clue := get_clue(q)):
+    clue = get_clue(q)
+    if not clue:
         clue = get_clue()
     return render_template("question.html", content=clue)
 
