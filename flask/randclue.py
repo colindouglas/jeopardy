@@ -1,9 +1,10 @@
 import sqlite3
+import os
 
 
 def get_clue(q=None):
-
-    db_file = 'clues.db'  # Path to SQLite DB
+    here = os.path.dirname(__file__)
+    db_file = os.path.join(here, 'clues.db')
 
     # Open connection to db
     conn = None
