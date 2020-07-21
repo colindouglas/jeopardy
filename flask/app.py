@@ -18,4 +18,5 @@ def clue_lookup(q=None):
     return render_template("question.html", content=clue)
 
 if __name__ == '__main__':
+    app.config['TEMPLATE_AUTO_RELOAD'] = True
     app.run()
